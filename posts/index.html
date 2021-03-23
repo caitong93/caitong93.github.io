@@ -1,232 +1,75 @@
 <!DOCTYPE html>
-<html>
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Posts | My New Hugo Site</title>
-  <link rel="icon" type="image/png" href="/assets/favicon.png" sizes="16x16">  
-  <link rel="icon" type="image/png" href="/assets/favicon.png" sizes="32x32">  
-  <link rel="icon" type="image/png" href="/assets/favicon.png" sizes="96x96"> 
-  <link rel="stylesheet" href="/assets/css/style.css" type="text/css">
-</head>
+<html class="no-js" lang="en-US">
+    <head>
+        <meta charset="utf-8">
 
-  <body>
-    <a href="/">
-  
-  <span id="some kind of header should go here"></span>
-  
-</a>
-<hr />
+        
 
-    <main>
-      
+        <base href="https://caitong93.github.io">
+        <title>My New Hugo Site</title>
+        <link rel="canonical" href="https://caitong93.github.io/posts/">
+        <link href="https://caitong93.github.io/posts/index.xml" rel="alternate" type="application/rss+xml" title="My New Hugo Site"/>
+
+        
+<link rel="stylesheet" href="css/styles.css">
 
 
+<link href='http://fonts.googleapis.com/css?family=Roboto+Slab' rel='stylesheet' type='text/css'>
 
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/contrib/auto-render.min.js"></script>
+
+    </head>
+    <body>
+        <div class="column">
 
 
-
-
-
-
-
-
-
-
-
-<div class="post-header">
-  <div class="post-title">
+<header class="header">
+    <a href="/" class="title">My New Hugo Site</a>
     
-    <h2>Envoy Hot Restart Implementation Analysis</h2>
-    <a href=https://caitong93.github.io/posts/my-first-post/>
-      <em>March 23, 2021</em>
-    </a>
-    
-  </div>
-</div>
+</header>
 
 
-<div class="list-content">
-  <h2 id="introduction">Introduction</h2>
-<p>Envoy 热重启功能的目的是为了减少 Envoy 重启/升级所需的 downtime。当一个新的 Envoy 进程启动时如果有在运行的 Envoy 进程，新的 Envoy 就会执行热重启逻辑。
-热重启的实现主要依赖 SHM(Linux Shared Memory), UDS(Unix Domain Socket) 和 Protobuf。SHM 存储了热重启的基本状态，和用于进程间同步的锁。Envoy 启动后会首先检测 SHM 中的状态，如果存在错误则立即退出。UDS 用于 child 和 server 之间的通信，消息以 Protobuf 格式序列化，消息类型包括从 parent 获取 listen sockets, 从 parent 获取 stats。 Envoy 热重启会保证 listen sockets 和 stats 在进程间无中断转移，而 parent 上已经建立的连接是会断开的。如果 7 层协议具有优雅断开机制，则流量无损。如果像是 tcp_proxy 这样的连接则是可能有损流量的。</p>
-<h2 id="shm">SHM</h2>
-<p><code>struct SharedMemory</code> 是 SHM 对应的数据结构，<code>size_</code> 是结构体大小, <code>version_</code> 为热重启协议版本，只有版本相等进程之间才能进行热重启。<code>log_lock</code> 和 <code>access_log_lock</code> 用于控制进程间日志操作的同步，这里可以先忽略。<code>flags_</code> 存储状态标志，目前只有 <code>SHMEM_FLAGS_INITIALIZING</code>，表示 Envoy 是否处于初始化阶段。</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#75715e">// Increment this whenever there is a shared memory / RPC change that will prevent a hot restart
-</span><span style="color:#75715e">// from working. Operations code can then cope with this and do a full restart.
-</span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">uint64_t</span> HOT_RESTART_VERSION <span style="color:#f92672">=</span> <span style="color:#ae81ff">11</span>;
+<section id="main">
+    <div>
+        
+            <article class="post">
+    <header class="post-summary-header">
+      <p class="post-title"><a href="https://caitong93.github.io/posts/my-first-post/">Envoy Hot Restart Implementation Analysis </a></p>
+      <p class="post-meta">Mar 23 2021 - 5 min </p>
+    </header>
 
-<span style="color:#75715e">/**
-</span><span style="color:#75715e"> * Shared memory segment. This structure is laid directly into shared memory and is used amongst
-</span><span style="color:#75715e"> * all running envoy processes.
-</span><span style="color:#75715e"> */</span>
-<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">SharedMemory</span> {
-  <span style="color:#66d9ef">uint64_t</span> size_;
-  <span style="color:#66d9ef">uint64_t</span> version_;
-  pthread_mutex_t log_lock_;
-  pthread_mutex_t access_log_lock_;
-  std<span style="color:#f92672">::</span>atomic<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">uint64_t</span><span style="color:#f92672">&gt;</span> flags_;
-};
-<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">uint64_t</span> SHMEM_FLAGS_INITIALIZING <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x1</span>;
-</code></pre></div><h2 id="rpc">RPC</h2>
-<p>Envoy 基于 UDS 和 Protobuf 实现了一套简单的 RPC，专门用于热重启。Envoy 启动时会绑定两个 UDS，分别作为 child 和 parent。下面是 <code>cat /proc/&lt;envoy pid&gt;/net/unix</code> 的结果:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">istio-proxy@newsrec-engine-docker-test-ab-3-8865k-mjrm0-6c79c45cb4-8sz26:/$ cat /proc/31/net/unix
-Num       RefCount Protocol Flags    Type St Inode Path
-000000006f0b8f0a: <span style="color:#ae81ff">00000002</span> <span style="color:#ae81ff">00000000</span> <span style="color:#ae81ff">00000000</span> <span style="color:#ae81ff">0002</span> <span style="color:#ae81ff">01</span> <span style="color:#ae81ff">1895644675</span> @envoy_domain_socket_parent_0@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-00000000462982b6: <span style="color:#ae81ff">00000002</span> <span style="color:#ae81ff">00000000</span> <span style="color:#ae81ff">00000000</span> <span style="color:#ae81ff">0002</span> <span style="color:#ae81ff">01</span> <span style="color:#ae81ff">1895644674</span> @envoy_domain_socket_child_0@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-</code></pre></div><p>从上面可以看到 Envoy 进程绑定了 <code>envoy_domain_socket_child_0, envoy_domain_socket_parent_0</code> 这两个 UDS，其命名格式为 <code>envoy_domain_socket_&lt;role&gt;_&lt;id&gt;</code> role 为 parent/child, id 是一个基于 epoch 计算的值。当前 Envoy 进程用 epoch -1 可以得到 parent 的 UDS, 用 epoch + 1 即可得到 child 的 UDS。</p>
-<p>接下来看一看 RPC 消息定义, 如下所示, 是 Protobuf 定义:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-protobuf" data-lang="protobuf"><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">HotRestartMessage</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// Child-&gt;parent requests
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Request</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">PassListenSocket</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#66d9ef">string</span> address <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">ShutdownAdmin</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Stats</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">DrainListeners</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Terminate</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">oneof</span> request {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      PassListenSocket pass_listen_socket <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      ShutdownAdmin shutdown_admin <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      Stats stats <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      DrainListeners drain_listeners <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      Terminate terminate <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>  }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// Parent-&gt;child replies
-</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Reply</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">PassListenSocket</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#66d9ef">int32</span> fd <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">ShutdownAdmin</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#66d9ef">uint64</span> original_start_time_unix_seconds <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Span</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#66d9ef">uint32</span> first <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#66d9ef">uint32</span> last <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>; <span style="color:#75715e">// inclusive
-</span><span style="color:#75715e"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">RepeatedSpan</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#66d9ef">repeated</span> Span spans <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Stats</span> {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#75715e">// Values for server_stats, which don&#39;t fit with the &#34;combination logic&#34; approach.
-</span><span style="color:#75715e"></span>      <span style="color:#66d9ef">uint64</span> memory_allocated <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#66d9ef">uint64</span> num_connections <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#75715e">// Keys are fully qualified stat names.
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">//
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// The amount added to the counter since the last time a message included the counter in this
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// map. (The first time a counter is included in this map, it&#39;s the amount added since the
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// final latch() before hot restart began).
-</span><span style="color:#75715e"></span>      map&lt;<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">uint64</span>&gt; counter_deltas <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#75715e">// The parent&#39;s current values for various gauges in its stats store.
-</span><span style="color:#75715e"></span>      map&lt;<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">uint64</span>&gt; gauges <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#75715e">// Maps the string representation of a StatName into an array of Spans,
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// which indicate which of the StatName tokens are dynamic. For example,
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// if we are recording a counter or gauge named &#34;a.b.c.d.e.f&#34;, where &#34;a&#34;,
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// and &#34;d.e&#34; were created from a StatNameDynamicPool, then we&#39;d map
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// &#34;a.b.c.d.e.f&#34; to the span array [[0,0], [3,4]], where the [0,0] span
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// covers the &#34;a&#34;, and the [3,4] span covers &#34;d.e&#34;.
-</span><span style="color:#75715e"></span>      map&lt;<span style="color:#66d9ef">string</span>, RepeatedSpan&gt; dynamics <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">oneof</span> reply {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      <span style="color:#75715e">// When this oneof is of the PassListenSocketReply type, there is a special
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// implied meaning: the recvmsg that got this proto has control data to make
-</span><span style="color:#75715e"></span>      <span style="color:#75715e">// the passing of the fd work, so make use of CMSG_SPACE etc.
-</span><span style="color:#75715e"></span>      PassListenSocket pass_listen_socket <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      ShutdownAdmin shutdown_admin <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>      Stats stats <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>  }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">oneof</span> requestreply {<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    Request request <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>    Reply reply <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>  }<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">bool</span> didnt_recognize_your_last_message <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
-</span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
-</span></code></pre></div><p>目前 RPC 消息都是由 child 主动发送给 parent, parent 发送回复之后, child 再发送下一个请求。 请求的类型有 <code>PassListenSocket</code>, <code>ShutdownAdmin</code>, <code>Stats</code>, <code>DrainListeners</code>,  <code>Terminate</code>. <code>PassListenSocket</code> 用于 child 向 parent 请求传递 listen socket。<code>ShutdownAdmin</code> 用于 child 请求 parent 停止监听 admin port, 然后 child 开始监听 admin port。<code>Stats</code> 用于传递监控指标。<code>DrainListeners</code> 用于 child 初始化完所有 workers，已经做好接管流量的准备时调用，收到这个请求后 parent 会关闭 所有 listener, 停止接收流量。<code>Terminate</code> 用于在 graceful 时间之后，让 parent 结束，parent 在收到这个消息后会立即结束。</p>
-<h2 id="listen-fd-传递">Listen FD 传递</h2>
-<p>Unix domain socket 支持在调用 <code>sendmsg</code> 传入类型为 <code>SCM_RIGHTS</code> 的 <a href="https://man7.org/linux/man-pages/man7/unix.7.html">ancillary data</a>, 这一机制被用来<a href="https://copyconstruct.medium.com/file-descriptor-transfer-over-unix-domain-sockets-dcbbf5b3b6ec">传递 file descriptor</a>。</p>
-<p>Envoy <code>void HotRestartingBase::sendHotRestartMessage(sockaddr_un&amp; address, const HotRestartMessage&amp; proto)</code> <a href="https://github.com/envoyproxy/envoy/blob/v1.17.1/source/server/hot_restarting_base.cc#L96">源码</a></p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> HotRestartingBase<span style="color:#f92672">::</span>sendHotRestartMessage(sockaddr_un<span style="color:#f92672">&amp;</span> address,
-                                              <span style="color:#66d9ef">const</span> HotRestartMessage<span style="color:#f92672">&amp;</span> proto) {
-  <span style="color:#75715e">// Child 初始化 Listener, 发现 Listener 的 reuse_port 属性为 false, 则从 parent 获取 listen socket 的 fd 
-</span><span style="color:#75715e"></span>
-  <span style="color:#75715e">// ...
-</span><span style="color:#75715e"></span>
-  <span style="color:#75715e">// send_buf 是 proto message 序列化后的数据, 可能会分成多个 UDP message 来发送
-</span><span style="color:#75715e"></span>
-  <span style="color:#66d9ef">uint8_t</span><span style="color:#f92672">*</span> next_byte_to_send <span style="color:#f92672">=</span> send_buf.data();
-  <span style="color:#66d9ef">uint64_t</span> sent <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-  <span style="color:#66d9ef">while</span> (sent <span style="color:#f92672">&lt;</span> total_size) {
-    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">uint64_t</span> cur_chunk_size <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>min(MaxSendmsgSize, total_size <span style="color:#f92672">-</span> sent);
-    iovec iov[<span style="color:#ae81ff">1</span>];
-    iov[<span style="color:#ae81ff">0</span>].iov_base <span style="color:#f92672">=</span> next_byte_to_send;
-    iov[<span style="color:#ae81ff">0</span>].iov_len <span style="color:#f92672">=</span> cur_chunk_size;
-    next_byte_to_send <span style="color:#f92672">+=</span> cur_chunk_size;
-    sent <span style="color:#f92672">+=</span> cur_chunk_size;
-    msghdr message;
-    memset(<span style="color:#f92672">&amp;</span>message, <span style="color:#ae81ff">0</span>, <span style="color:#66d9ef">sizeof</span>(message));
-    message.msg_name <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>address;
-    message.msg_namelen <span style="color:#f92672">=</span> <span style="color:#66d9ef">sizeof</span>(address);
-    message.msg_iov <span style="color:#f92672">=</span> iov;
-    message.msg_iovlen <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
-
-    <span style="color:#75715e">// 如果是 kPassListenSocket 的消息，则传递 fd
-</span><span style="color:#75715e"></span>
-    <span style="color:#75715e">// Control data stuff, only relevant for the fd passing done with PassListenSocketReply.
-</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">uint8_t</span> control_buffer[CMSG_SPACE(<span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>))];
-    <span style="color:#66d9ef">if</span> (replyIsExpectedType(<span style="color:#f92672">&amp;</span>proto, HotRestartMessage<span style="color:#f92672">::</span>Reply<span style="color:#f92672">::</span>kPassListenSocket) <span style="color:#f92672">&amp;&amp;</span>
-        proto.reply().pass_listen_socket().fd() <span style="color:#f92672">!=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
-      memset(control_buffer, <span style="color:#ae81ff">0</span>, CMSG_SPACE(<span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>)));
-      message.msg_control <span style="color:#f92672">=</span> control_buffer;
-      message.msg_controllen <span style="color:#f92672">=</span> CMSG_SPACE(<span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>));
-      cmsghdr<span style="color:#f92672">*</span> control_message <span style="color:#f92672">=</span> CMSG_FIRSTHDR(<span style="color:#f92672">&amp;</span>message);
-      control_message<span style="color:#f92672">-&gt;</span>cmsg_level <span style="color:#f92672">=</span> SOL_SOCKET;
-      control_message<span style="color:#f92672">-&gt;</span>cmsg_type <span style="color:#f92672">=</span> SCM_RIGHTS;
-      control_message<span style="color:#f92672">-&gt;</span>cmsg_len <span style="color:#f92672">=</span> CMSG_LEN(<span style="color:#66d9ef">sizeof</span>(<span style="color:#66d9ef">int</span>));
-      <span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">int</span><span style="color:#f92672">*&gt;</span>(CMSG_DATA(control_message)) <span style="color:#f92672">=</span> proto.reply().pass_listen_socket().fd();
-      ASSERT(sent <span style="color:#f92672">==</span> total_size, <span style="color:#e6db74">&#34;an fd passing message was too long for one sendmsg().&#34;</span>);
-    }
-
-    sendmsg(my_domain_socket_, <span style="color:#f92672">&amp;</span>message, <span style="color:#ae81ff">0</span>);
-  }
-
-  <span style="color:#75715e">// ...
-</span><span style="color:#75715e"></span>}
-</code></pre></div><h2 id="时序控制">时序控制</h2>
-<p>热重启有较为严格的时序控制。Envoy 通过启动时传入 <code>--restart-epoch</code> 来为当前进程分配一个 epoch 用于时序控制，每次分配时 epoch 需要先自增 1。在同一时刻最多能够同时存在 3 个 Envoy 进程。例如这个场景，epoch 1 已经初始化完成，epoch 0 正等待 shutdown,  此时 epoch 2 启动，则会触发 epoch 1 进入热重启过程，epoch 1 同时会立刻调用 <code>sendParentAdminShutdownRequest()</code> 结束掉 epoch 0。如果 epoch 2 启动的时候，epoch 1 还未初始化完成，则 epoch 2 会立刻退出。</p>
-<h2 id="热重启的风险">热重启的风险</h2>
-<p>Envoy 热重启过程中，由于有两个 Envoy 进程同时运行，所以内存占用会倍增，此时有 OOM 的风险。所以在部署运维时，需要对 Envoy 的 rss 指标进行监控，当其大于 memory.limit 的 50% 时告警。同时避免频繁的热重启操作。</p>
-
-</div>
-
-<hr />
-
-
-
-
-
-    </main>
+    Introduction Envoy 热重启功能的目的是为了减少 Envoy 重启/升级所需的 downtime。当一个新的 Envoy 进程启动时如果有在运行的 Envoy 进程，新的 Envoy 就会执行热重启逻辑。 热重启的实现主要依赖 SHM(Linux Shared Memory), UDS(Unix Domain Socket) 和 Protobuf。SHM 存储了热重启的基本状态，和用于进程间同步的锁。Envoy 启动后会首先检测 SHM 中的状态，如果存在错误则立即退出。UDS 用于 child 和 server 之间的通信，消息以 Protobuf 格式序列化，消息类型包括从 parent 获取 listen sockets, 从 parent 获取 stats。 Envoy 热重启会保证 listen sockets 和 stats 在进程间无中断转移，而 parent 上已经建立的连接是会断开的。如果 7 层协议具有优雅断开机制，则流量无损。如果像是 tcp_proxy 这样的连接则是可能有损流量的。
+SHM struct SharedMemory 是 SHM 对应的数据结构，size_ 是结构体大小, version_ 为热重启协议版本，只有版本相等进程之间才能进行热重启。log_lock 和 access_log_lock 用于控制进程间日志操作的同步，这里可以先忽略。flags_ 存储状态标志，目前只有 SHMEM_FLAGS_INITIALIZING，表示 Envoy 是否处于初始化阶段。
+// Increment this whenever there is a shared memory / RPC change that will prevent a hot restart // from working.
     <footer>
-  <hr />
-  <ul>
-    
-    
-    <li>
-      <em id="updated">Updated: March 23, 2021</em>
-    </li>
-  </ul>
- </footer>
+        <a href='https://caitong93.github.io/posts/my-first-post/'><nobr>more →</nobr></a>
+    </footer>
+</article>
 
-  </body>
+        
+    </div>
+</section>
+
+<footer class="bottom-footer">
+  <div class="copyright">
+    <p>
+    
+    <a href="http://creativecommons.org/licenses/by/4.0/" title="Creative Commons Attribution">Some rights reserved</a>; 
+    please attribute properly and link back.
+    
+    
+    </p>
+  </div>
+</footer>
+
+<script>
+    renderMathInElement(document.getElementById('main'));
+</script>
+
+</div>
+</body>
 </html>
+
