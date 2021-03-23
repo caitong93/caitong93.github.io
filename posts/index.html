@@ -6,9 +6,9 @@
         
 
         <base href="https://caitong93.github.io">
-        <title>My New Hugo Site</title>
+        <title>Code Notes</title>
         <link rel="canonical" href="https://caitong93.github.io/posts/">
-        <link href="https://caitong93.github.io/posts/index.xml" rel="alternate" type="application/rss+xml" title="My New Hugo Site"/>
+        <link href="https://caitong93.github.io/posts/index.xml" rel="alternate" type="application/rss+xml" title="Code Notes"/>
 
         
 <link rel="stylesheet" href="css/styles.css">
@@ -27,7 +27,7 @@
 
 
 <header class="header">
-    <a href="/" class="title">My New Hugo Site</a>
+    <a href="/" class="title">Code Notes</a>
     
 </header>
 
@@ -37,7 +37,7 @@
         
             <article class="post">
     <header class="post-summary-header">
-      <p class="post-title"><a href="https://caitong93.github.io/posts/my-first-post/">Envoy Hot Restart Implementation Analysis </a></p>
+      <p class="post-title"><a href="https://caitong93.github.io/posts/envoy-hot-restart-implementation-analysis/">Envoy Hot Restart Implementation Analysis </a></p>
       <p class="post-meta">Mar 23 2021 - 5 min </p>
     </header>
 
@@ -45,7 +45,7 @@
 SHM struct SharedMemory 是 SHM 对应的数据结构，size_ 是结构体大小, version_ 为热重启协议版本，只有版本相等进程之间才能进行热重启。log_lock 和 access_log_lock 用于控制进程间日志操作的同步，这里可以先忽略。flags_ 存储状态标志，目前只有 SHMEM_FLAGS_INITIALIZING，表示 Envoy 是否处于初始化阶段。
 // Increment this whenever there is a shared memory / RPC change that will prevent a hot restart // from working.
     <footer>
-        <a href='https://caitong93.github.io/posts/my-first-post/'><nobr>more →</nobr></a>
+        <a href='https://caitong93.github.io/posts/envoy-hot-restart-implementation-analysis/'><nobr>more →</nobr></a>
     </footer>
 </article>
 
