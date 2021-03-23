@@ -43,9 +43,9 @@
 <div class="post-header">
   <div class="post-title">
     
-    <h2>My First Post</h2>
+    <h2>Envoy Hot Restart Implementation Analysis</h2>
     <a href=https://caitong93.github.io/posts/my-first-post/>
-      <em>July 18, 2020</em>
+      <em>March 23, 2021</em>
     </a>
     
   </div>
@@ -53,7 +53,9 @@
 
 
 <div class="list-content">
-  
+  <h2 id="introduction">Introduction</h2>
+<p>Envoy 热重启功能的目的是为了减少 Envoy 重启/升级所需的 downtime。当一个新的 Envoy 进程启动时如果有在运行的 Envoy 进程，新的 Envoy 就会执行热重启逻辑。
+热重启的实现主要依赖 SHM(Linux Shared Memory), UDS(Unix Domain Socket) 和 Protobuf。SHM 存储了热重启的基本状态，和 …</p>
 </div>
 
 <hr />
@@ -69,7 +71,7 @@
     
     
     <li>
-      <em id="updated">Updated: July 18, 2020</em>
+      <em id="updated">Updated: March 23, 2021</em>
     </li>
   </ul>
  </footer>

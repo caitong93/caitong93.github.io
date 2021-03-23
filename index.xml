@@ -6,18 +6,20 @@
     <description>Recent content on My New Hugo Site</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 18 Jul 2020 20:29:23 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 23 Mar 2021 11:14:52 +0800</lastBuildDate>
     
 	<atom:link href="https://caitong93.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>My First Post</title>
+      <title>Envoy Hot Restart Implementation Analysis</title>
       <link>https://caitong93.github.io/posts/my-first-post/</link>
-      <pubDate>Sat, 18 Jul 2020 20:29:23 +0800</pubDate>
+      <pubDate>Tue, 23 Mar 2021 11:14:52 +0800</pubDate>
       
       <guid>https://caitong93.github.io/posts/my-first-post/</guid>
-      <description></description>
+      <description>Introduction Envoy 热重启功能的目的是为了减少 Envoy 重启/升级所需的 downtime。当一个新的 Envoy 进程启动时如果有在运行的 Envoy 进程，新的 Envoy 就会执行热重启逻辑。 热重启的实现主要依赖 SHM(Linux Shared Memory), UDS(Unix Domain Socket) 和 Protobuf。SHM 存储了热重启的基本状态，和用于进程间同步的锁。Envoy 启动后会首先检测 SHM 中的状态，如果存在错误则立即退出。UDS 用于 child 和 server 之间的通信，消息以 Protobuf 格式序列化，消息类型包括从 parent 获取 listen sockets, 从 parent 获取 stats。 Envoy 热重启会保证 listen sockets 和 stats 在进程间无中断转移，而 parent 上已经建立的连接是会断开的。如果 7 层协议具有优雅断开机制，则流量无损。如果像是 tcp_proxy 这样的连接则是可能有损流量的。
+SHM struct SharedMemory 是 SHM 对应的数据结构，size_ 是结构体大小, version_ 为热重启协议版本，只有版本相等进程之间才能进行热重启。log_lock 和 access_log_lock 用于控制进程间日志操作的同步，这里可以先忽略。flags_ 存储状态标志，目前只有 SHMEM_FLAGS_INITIALIZING，表示 Envoy 是否处于初始化阶段。
+// Increment this whenever there is a shared memory / RPC change that will prevent a hot restart // from working.</description>
     </item>
     
   </channel>
