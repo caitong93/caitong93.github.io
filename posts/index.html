@@ -10,7 +10,7 @@
 <meta property='og:description' content=''>
 <meta property='og:url' content='https://caitong93.github.io/posts/'>
 <meta property='og:site_name' content='Code Notes'>
-<meta property='og:type' content='website'><meta property='article:section' content='Posts'><meta property='og:updated_time' content='2021-03-23T11:14:52&#43;08:00'><meta name='twitter:card' content='summary'><meta name='twitter:site' content='@'><meta name='twitter:creator' content='@'>
+<meta property='og:type' content='website'><meta property='article:section' content='Posts'><meta property='og:updated_time' content='2021-04-01T18:48:18&#43;08:00'><meta name='twitter:card' content='summary'><meta name='twitter:site' content='@'><meta name='twitter:creator' content='@'>
 
 
 <link href="https://caitong93.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Code Notes">
@@ -58,6 +58,29 @@
 </section>
 <section class="section">
   <div class="container">
+    
+    <article>
+      <div class="subtitle tags is-6 is-pulled-right">
+        
+      </div>
+      <h2 class="subtitle is-6 date">April 1, 2021</h2>
+      <h1 class="title"><a href="https://caitong93.github.io/posts/envoy-header-map-implementation/">Envoy HeaderMap Implementation in 1.17
+
+  
+    
+  
+</a></h1>
+      <div class="content">
+        Intro 在将内部 Envoy 工程适配上游 1.17 的过程中，我发现原来使用 HeaderMap 的地方都换成了 RequestHeaderMap, ResponseHeaderMap。HeaderMap 仍存在，成为了后者的 base class。Envoy 对标准或者常用的 header 做了优化，定义了一个 inline header 集合，对这些 header 的操作是 O(1) 开销，内存开销也更少。在 1.17 中，优化更进一步，RequestHeaderMap 和 ResponseHeaderMap 维护独立的 inline header 数据结构。
+HeaderMap 的主要实现仍然在HeaderMapImpl上，RequestHeaderMap 和 ResponseHeaderMap 只负责声明各自的 inline headers。
+class HeaderMapImpl { public: // ...  virtual HeaderEntryImpl** inlineHeaders() PURE; } class class RequestHeaderMapImpl final: public TypedHeaderMapImpl&lt;RequestHeaderMap&gt;, public InlineStorage { public: // ... protected: HeaderEntryImpl** inlineHeaders() override { return inline_headers_; } private: HeaderEntryImpl* inline_headers_[]; } HeaderMapImpl 通过虚函数 inlineHeaders 在运行时获取到实际的 inline headers。
+        
+        <a class="button is-link" href="https://caitong93.github.io/posts/envoy-header-map-implementation/" style="height:28px">
+          Read more
+        </a>
+        
+      </div>
+    </article>
     
     <article>
       <div class="subtitle tags is-6 is-pulled-right">
