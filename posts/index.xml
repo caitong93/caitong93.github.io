@@ -7,17 +7,17 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>&amp;copy; &lt;a href=&#34;https://github.com/caitong93&#34;&gt;Tong Cai&lt;/a&gt; 2021</copyright>
-    <lastBuildDate>Sun, 06 Jun 2021 20:34:02 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 06 Jun 2021 22:50:07 +0800</lastBuildDate>
     
 	<atom:link href="https://caitong93.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Envoy Tls Tansport Socket</title>
-      <link>https://caitong93.github.io/posts/envoy-tls-tansport-socket/</link>
-      <pubDate>Sun, 06 Jun 2021 20:34:02 +0800</pubDate>
+      <title>Envoy Tls Introduction</title>
+      <link>https://caitong93.github.io/posts/envoy-tls-introduction/</link>
+      <pubDate>Sun, 06 Jun 2021 22:50:07 +0800</pubDate>
       
-      <guid>https://caitong93.github.io/posts/envoy-tls-tansport-socket/</guid>
+      <guid>https://caitong93.github.io/posts/envoy-tls-introduction/</guid>
       <description>Concepts TransportSocket
 TransportSocket 是 Envoy 中为 socket 定义的通用接口，其底层实现可以拓展, tls TransportSocket 插件就是利用这一机制在连接建立时处理 tls 相关逻辑。
 Configuration Envoy 可以作为 server 接收下游连接，同时作为 client 发起上游连接。所以 tls TransportSocket 配置也分为 Server 和 Client 配置。

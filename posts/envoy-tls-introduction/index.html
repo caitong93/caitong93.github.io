@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Envoy Tls Tansport Socket | Code Notes</title>
+<title>Envoy Tls Introduction | Code Notes</title>
 
-<meta property='og:title' content='Envoy Tls Tansport Socket - Code Notes'>
+<meta property='og:title' content='Envoy Tls Introduction - Code Notes'>
 <meta property='og:description' content='Concepts TransportSocket
 TransportSocket 是 Envoy 中为 socket 定义的通用接口，其底层实现可以拓展, tls TransportSocket 插件就是利用这一机制在连接建立时处理 tls 相关逻辑。
 Configuration Envoy 可以作为 server 接收下游连接，同时作为 client 发起上游连接。所以 tls TransportSocket 配置也分为 Server 和 Client 配置。
@@ -14,9 +14,9 @@ Envoy 提供了 double-proxy 的例子 https://github.com/envoyproxy/envoy/tree/
 该例子中部署了一个 app &#43; envoy 和一个 db &#43; envoy, 网络拓扑是
 [ app --http--&gt; proxy ] --https--&gt; [ proxy --http--&gt; db ] 下游 上游 下面是截取上游的 proxy 的 Listener 配置:
 listeners: - name: postgres_listener address: socket_address: address: 0.0.0.0 port_value: 5432 listener_filters: - name: &#34;envoy.'>
-<meta property='og:url' content='https://caitong93.github.io/posts/envoy-tls-tansport-socket/'>
+<meta property='og:url' content='https://caitong93.github.io/posts/envoy-tls-introduction/'>
 <meta property='og:site_name' content='Code Notes'>
-<meta property='og:type' content='article'><meta property='article:section' content='Posts'><meta property='article:published_time' content='2021-06-06T20:34:02&#43;08:00'><meta property='article:modified_time' content='2021-06-06T20:34:02&#43;08:00'><meta name='twitter:card' content='summary'><meta name='twitter:site' content='@'><meta name='twitter:creator' content='@'>
+<meta property='og:type' content='article'><meta property='article:section' content='Posts'><meta property='article:published_time' content='2021-06-06T22:50:07&#43;08:00'><meta property='article:modified_time' content='2021-06-06T22:50:07&#43;08:00'><meta name='twitter:card' content='summary'><meta name='twitter:site' content='@'><meta name='twitter:creator' content='@'>
 
 
 <link href="https://caitong93.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Code Notes">
@@ -26,7 +26,7 @@ listeners: - name: postgres_listener address: socket_address: address: 0.0.0.0 p
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
-<link rel="canonical" href="https://caitong93.github.io/posts/envoy-tls-tansport-socket/">
+<link rel="canonical" href="https://caitong93.github.io/posts/envoy-tls-introduction/">
 <meta name="msapplication-TileColor" content="#da532c">
 <meta name="theme-color" content="#ffffff">
 </head>
@@ -68,7 +68,7 @@ listeners: - name: postgres_listener address: socket_address: address: 0.0.0.0 p
       
     </div>
     <h2 class="subtitle is-6">June 6, 2021</h2>
-    <h1 class="title">Envoy Tls Tansport Socket</h1>
+    <h1 class="title">Envoy Tls Introduction</h1>
     
     <div class="content">
       <h2 id="concepts">Concepts</h2>
