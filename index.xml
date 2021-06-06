@@ -14,10 +14,10 @@
     
     <item>
       <title>Envoy Tls Tansport Socket</title>
-      <link>https://caitong93.github.io/posts/envoy-tls/</link>
+      <link>https://caitong93.github.io/posts/envoy-tls-tansport-socket/</link>
       <pubDate>Sun, 06 Jun 2021 20:34:02 +0800</pubDate>
       
-      <guid>https://caitong93.github.io/posts/envoy-tls/</guid>
+      <guid>https://caitong93.github.io/posts/envoy-tls-tansport-socket/</guid>
       <description>Concepts TransportSocket
 TransportSocket 是 Envoy 中为 socket 定义的通用接口，其底层实现可以拓展, tls TransportSocket 插件就是利用这一机制在连接建立时处理 tls 相关逻辑。
 Configuration Envoy 可以作为 server 接收下游连接，同时作为 client 发起上游连接。所以 tls TransportSocket 配置也分为 Server 和 Client 配置。
