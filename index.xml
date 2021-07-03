@@ -7,10 +7,24 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>&amp;copy; &lt;a href=&#34;https://github.com/caitong93&#34;&gt;Tong Cai&lt;/a&gt; 2021</copyright>
-    <lastBuildDate>Sun, 06 Jun 2021 22:50:07 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 02 Jul 2021 13:04:28 +0800</lastBuildDate>
     
 	<atom:link href="https://caitong93.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Envoy Session Persistence</title>
+      <link>https://caitong93.github.io/posts/envoy-session-persistence/</link>
+      <pubDate>Fri, 02 Jul 2021 13:04:28 +0800</pubDate>
+      
+      <guid>https://caitong93.github.io/posts/envoy-session-persistence/</guid>
+      <description>什么是会话保持 我们可以从这篇文章了解到 从上面的文章中截取一些要点:
+ The difference between persistence and affinity
+Affinity: this is when we use an information from a layer below the application layer to maintain a client request to a single server
+Persistence: this is when we use Application layer information to stick a client to a single server
+sticky session: a sticky session is a session maintained by persistence
+ 也就是说 affinity 是一种利用应用层以下的将请求映射到一个 server 的方式。而 persistence 是利用应用层的信息让来自一个 client 的请求都&amp;quot;粘&amp;quot;在一个 server 上。Affinity 不保证会话一定能保持，而 persistence 可以。</description>
+    </item>
     
     <item>
       <title>Envoy Tls Introduction</title>

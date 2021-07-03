@@ -10,7 +10,7 @@
 <meta property='og:description' content=''>
 <meta property='og:url' content='https://caitong93.github.io/posts/'>
 <meta property='og:site_name' content='Code Notes'>
-<meta property='og:type' content='website'><meta property='article:section' content='Posts'><meta property='og:updated_time' content='2021-06-06T22:50:07&#43;08:00'><meta name='twitter:card' content='summary'><meta name='twitter:site' content='@'><meta name='twitter:creator' content='@'>
+<meta property='og:type' content='website'><meta property='article:section' content='Posts'><meta property='og:updated_time' content='2021-07-02T13:04:28&#43;08:00'><meta name='twitter:card' content='summary'><meta name='twitter:site' content='@'><meta name='twitter:creator' content='@'>
 
 
 <link href="https://caitong93.github.io/index.xml" rel="alternate" type="application/rss+xml" title="Code Notes">
@@ -58,6 +58,32 @@
 </section>
 <section class="section">
   <div class="container">
+    
+    <article>
+      <div class="subtitle tags is-6 is-pulled-right">
+        
+      </div>
+      <h2 class="subtitle is-6 date">July 2, 2021</h2>
+      <h1 class="title"><a href="https://caitong93.github.io/posts/envoy-session-persistence/">Envoy Session Persistence
+
+  
+    
+  
+</a></h1>
+      <div class="content">
+        什么是会话保持 我们可以从这篇文章了解到 从上面的文章中截取一些要点:
+ The difference between persistence and affinity
+Affinity: this is when we use an information from a layer below the application layer to maintain a client request to a single server
+Persistence: this is when we use Application layer information to stick a client to a single server
+sticky session: a sticky session is a session maintained by persistence
+ 也就是说 affinity 是一种利用应用层以下的将请求映射到一个 server 的方式。而 persistence 是利用应用层的信息让来自一个 client 的请求都&quot;粘&quot;在一个 server 上。Affinity 不保证会话一定能保持，而 persistence 可以。
+        
+        <a class="button is-link" href="https://caitong93.github.io/posts/envoy-session-persistence/" style="height:28px">
+          Read more
+        </a>
+        
+      </div>
+    </article>
     
     <article>
       <div class="subtitle tags is-6 is-pulled-right">
